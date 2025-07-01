@@ -7,7 +7,15 @@ matplotlib.use('Agg')  # Usar backend no interactivo antes de importar pyplot
 
 
 def f(x):
-    return 2*x**2 - x - 5
+    # Evitar evaluar fuera del dominio de ln(x) y singularidades de tan(x)
+    if x <= 0:
+        return np.nan
+    # Singularidades de tan(x): x = pi/2 + n*pi
+    for k in range(-10, 11):
+        sing = (np.pi/2) + k*np.pi
+        if abs(x - sing) < 1e-4:
+            return np.nan
+    return np.log(x) - np.tan(x)
 
 
 def regla_falsa(xi, xd, eps1=0.0001, eps2=0.0001, max_iter=100,
@@ -87,7 +95,7 @@ def regla_falsa(xi, xd, eps1=0.0001, eps2=0.0001, max_iter=100,
 # Código principal para ejecutar el método
 if __name__ == "__main__":
     # Definir intervalos para encontrar diferentes raíces
-    intervalos = [(-3, 0), (1, 3)]
+    intervalos = [(3.5, 4.5)]
     raices_encontradas = []
 
     print("BÚSQUEDA DE RAÍCES CON EL MÉTODO DE LA REGLA FALSA")
@@ -126,8 +134,15 @@ if __name__ == "__main__":
         print(f"Raíz {i+1}: x = {raiz:.10f}, f(x) = {f(raiz):.2e}")
 
     # Generar la gráfica con todas las raíces encontradas
-    x = np.linspace(-3, 4, 400)
-    y = f(x)
+    x = np.linspace(-3, 4, 800)
+    y = []
+    for xi in x:
+        yi = f(xi)
+        if np.isnan(yi) or np.isinf(yi) or abs(yi) > 100:
+            y.append(np.nan)
+        else:
+            y.append(yi)
+
     plt.figure(figsize=(12, 8))
     plt.plot(x, y, color='blue', linewidth=2, label='f(x) = 2x² - x - 5')
     plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
