@@ -1,149 +1,114 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # Usar backend no interactivo antes de importar pyplot
+matplotlib.use('Agg')
 
-
+# Función y su derivada
 def f(x):
-    return 2*x**2 - x - 5
-
+    """Función f(x) = ln(x) - tan(x)"""
+    return np.log(x) - np.tan(x)
 
 def df(x):
-    return 4*x - 1
+    """Derivada f'(x) = 1/x - sec²(x)"""
+    return 1/x - (1/np.cos(x))**2
 
-
-def newton_raphson(x0_inicial, eps1=0.0001, eps2=0.0001, max_iter=100, mostrar_tabla=True):
+def newton_raphson(x0, tolerancia=0.0001, max_iter=50):
     """
-    Implementa el método de Newton-Raphson para encontrar una raíz
-
+    Método de Newton-Raphson simplificado
+    
     Args:
-        x0_inicial: punto inicial
-        eps1: tolerancia para |x1-x0|
-        eps2: tolerancia para |f(x1)|
-        max_iter: máximo número de iteraciones
-        mostrar_tabla: si mostrar la tabla de iteraciones
-
+        x0: punto inicial
+        tolerancia: precisión deseada
+        max_iter: máximo de iteraciones
+    
     Returns:
-        tuple: (raíz encontrada, número de iteraciones, convergió)
+        x: raíz encontrada (o None si no converge)
     """
-    x0, k = x0_inicial, 0
+    print(f"\nPunto inicial: x0 = {x0}")
+    print(f"{'k':<3} {'x':<12} {'f(x)':<12}")
+    print("-" * 30)
+    
+    x = x0
+    for k in range(max_iter):
+        fx = f(x)
+        print(f"{k:<3} {x:<12.6f} {fx:<12.6f}")
+        
+        # Verificar convergencia
+        if abs(fx) < tolerancia:
+            print(f"\nConvergió en {k} iteraciones")
+            print(f"Raíz: x = {x:.8f}")
+            print(f"Verificación: f({x:.6f}) = {fx:.2e}")
+            return x
+        
+        # Calcular siguiente punto
+        dfx = df(x)
+        x = x - fx/dfx
+    
+    print(f"No convergió en {max_iter} iteraciones")
+    return None
 
-    # Verificar división por cero antes del primer cálculo
-    if np.abs(df(x0)) < 1e-15:
-        print(f"Error: la derivada es cero en x0 = {x0}, "
-              f"no se puede iniciar el método")
-        return None, 0, False
+# Encontrar raíces con diferentes puntos iniciales
+print("MÉTODO DE NEWTON-RAPHSON PARA f(x) = ln(x) - tan(x)")
+print("=" * 55)
 
-    x1 = x0 - (f(x0)/df(x0))
+puntos_iniciales = [3.5, 4.5]
+raices = []
 
-    if mostrar_tabla:
-        # Imprimir encabezados de la tabla
-        print("=" * 70)
-        print(f"{'Iter':<6} {'x0':<12} {'x1':<12} {
-              '|x1-x0|':<12} {'|f(x1)|':<12}")
-        print("=" * 70)
-
-    while np.abs(x1-x0) > eps1 and np.abs(f(x1)) > eps2 and k < max_iter:
-        if mostrar_tabla:
-            print(f"{k:<6} {x0:<12.8f} {x1:<12.8f} {np.abs(x1-x0):<12.8f} "
-                  f"{np.abs(f(x1)):<12.8f}")
-        k = k+1
-        x0 = x1
-        if np.abs(df(x0)) < 1e-15:
-            if mostrar_tabla:
-                print(f"Error: la derivada es cero en x = {
-                      x0}, no se puede continuar")
-            return None, k, False
-        x1 = x0 - (f(x0)/df(x0))
-
-    if mostrar_tabla:
-        print("=" * 70)
-
-    if k >= max_iter:
-        if mostrar_tabla:
-            print(f'No convergió después de {
-                  max_iter} iteraciones desde x0 = {x0_inicial}')
-        return None, k, False
-    else:
-        return x1, k, True
-
-
-# Definir múltiples puntos iniciales para encontrar diferentes raíces
-puntos_iniciales = [-1, 2]
-raices_encontradas = []
-
-print("BÚSQUEDA DE MÚLTIPLES RAÍCES CON EL MÉTODO DE NEWTON-RAPHSON")
-print("=" * 80)
-
-for i, x0 in enumerate(puntos_iniciales):
-    print(f"\nPUNTO INICIAL {i+1}: x0 = {x0}")
-    print("-" * 50)
-
-    raiz, iteraciones, convergio = newton_raphson(x0, mostrar_tabla=True)
-
-    if convergio:
-        print(f'La solución es: x = {raiz:.10f}')
-        print(f'Verificación: f(x) = {f(raiz):.2e}')
-        print(f'Iteraciones: {iteraciones}')
-
-        # Verificar si esta raíz ya fue encontrada (evitar duplicados)
+for x0 in puntos_iniciales:
+    raiz = newton_raphson(x0)
+    if raiz is not None:
+        # Evitar raíces duplicadas
         es_nueva = True
-        for raiz_existente in raices_encontradas:
-            if np.abs(raiz - raiz_existente) < 1e-3:  # Tolerancia más amplia para duplicados
+        for r in raices:
+            if abs(raiz - r) < 0.01:
                 es_nueva = False
+                print("(Raíz duplicada)")
                 break
-
         if es_nueva:
-            raices_encontradas.append(raiz)
-            print("*** NUEVA RAÍZ ENCONTRADA ***")
+            raices.append(raiz)
+
+# Resumen final
+print("\n" + "=" * 55)
+print("RAÍCES ENCONTRADAS:")
+print("=" * 55)
+for i, raiz in enumerate(raices):
+    print(f"Raíz {i+1}: x = {raiz:.8f}, f(x) = {f(raiz):.2e}")
+
+# Gráfica simple
+x = np.linspace(0.5, 12, 1000)
+y = []
+
+# Evaluar función evitando problemas en singularidades
+for xi in x:
+    try:
+        yi = f(xi)
+        if abs(yi) < 100:  # Evitar valores muy grandes cerca de singularidades
+            y.append(yi)
         else:
-            print("(Raíz ya encontrada anteriormente)")
-    else:
-        print(f"No convergió, después de {iteraciones} iteraciones")
+            y.append(np.nan)
+    except:
+        y.append(np.nan)
 
-print(f"\n" + "=" * 80)
-print("RESUMEN DE RAÍCES ENCONTRADAS:")
-print("=" * 80)
-for i, raiz in enumerate(raices_encontradas):
-    print(f"Raíz {i+1}: x = {raiz:.10f}, f(x) = {f(raiz):.2e}")
-
-
-# Generar la gráfica con todas las raíces encontradas
-x = np.linspace(-3, 4, 400)
-y = f(x)
-plt.figure(figsize=(12, 8))
-plt.plot(x, y, color='blue', linewidth=2, label='f(x) = 2x² - x - 5')
-plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-plt.axvline(x=0, color='black', linestyle='-', alpha=0.3)
-
-# Plotear todas las raíces encontradas
-colores = ['red', 'green', 'orange', 'purple', 'brown']
-for i, raiz in enumerate(raices_encontradas):
-    color = colores[i % len(colores)]
-    plt.plot(raiz, f(raiz), 'o', markersize=10, color=color,
-             label=f'Raíz {i+1}: x = {raiz:.6f}')
-    # Línea vertical desde la raíz hasta el eje x
-    plt.axvline(x=raiz, color=color, linestyle='--', alpha=0.5)
-
-# Mostrar los puntos iniciales en la gráfica
-for i, x0 in enumerate(puntos_iniciales):
-    plt.plot(x0, f(x0), 's', markersize=8, color='gray', alpha=0.7)
-
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, 'b-', linewidth=2, label='f(x) = ln(x) - tan(x)')
+plt.axhline(y=0, color='k', linestyle='-', alpha=0.3)
 plt.grid(True, alpha=0.3)
-plt.xlabel('x', fontsize=12)
-plt.ylabel('f(x)', fontsize=12)
-plt.title('Método de Newton-Raphson - Múltiples Raíces', fontsize=14)
-plt.legend()
 
-# Agregar texto con información
-textstr = f'Raíces encontradas: {
-    len(raices_encontradas)}\nPuntos iniciales probados: {len(puntos_iniciales)}'
-props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-plt.text(0.02, 0.98, textstr, transform=plt.gca().transAxes, fontsize=10,
-         verticalalignment='top', bbox=props)
+# Marcar las raíces encontradas
+colores = ['red', 'green', 'orange', 'purple']
+for i, raiz in enumerate(raices):
+    color = colores[i % len(colores)]
+    plt.plot(raiz, 0, 'o', markersize=8, color=color, 
+             label=f'Raíz {i+1}: x={raiz:.4f}')
+
+plt.xlabel('x')
+plt.ylabel('f(x)')
+plt.title('Método de Newton-Raphson: f(x) = ln(x) - tan(x)')
+plt.legend()
+plt.ylim(-5, 5)
+plt.xlim(0.5, 12)
 
 plt.tight_layout()
-plt.savefig('metodo_newton_grafica.png', dpi=300, bbox_inches='tight')
-print('\nGráfica guardada como: metodo_newton_grafica.png')
-print(f'La gráfica muestra {len(raices_encontradas)} raíces encontradas usando {
-      len(puntos_iniciales)} puntos iniciales')
+plt.savefig('metodo_newton_grafica.png', dpi=150, bbox_inches='tight')
+print(f"\nGráfica guardada como: metodo_newton_grafica.png")
+print(f"Se encontraron {len(raices)} raíces distintas")

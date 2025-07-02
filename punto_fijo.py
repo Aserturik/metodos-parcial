@@ -1,44 +1,38 @@
 import numpy as np
 
-
-def f(x):
-    return x**2-2*x-3
+# Definir la función de iteración para punto fijo: x = g(x)
 
 
 def g(x):
-    return (2*x+3)**(0.5)
+    return np.exp(np.tan(x))
 
 
-def gprima(x):
-    h = 1e-5  # Pequeño valor para la derivada numérica
-    return (g(x + h) - g(x)) / h
+def f(x):
+    return np.log(x) - np.tan(x)
 
 
-x0, eps1, eps2, k = 4, 0.0001, 0.0001, 0
-max_iter = 100
+def punto_fijo(x0, tolerancia=1e-4, max_iter=50):
+    print("MÉTODO DEL PUNTO FIJO PARA f(x) = ln(x) - tan(x)")
+    print("=" * 55)
+    print(f"Punto inicial: x0 = {x0}")
+    print(f"{'k':<3} {'x':<12} {'f(x)':<12}")
+    print("-" * 30)
+    x = x0
+    for k in range(max_iter):
+        fx = f(x)
+        print(f"{k:<3} {x:<12.6f} {fx:<12.6f}")
+        if abs(fx) < tolerancia:
+            print(f"\nConvergió en {k} iteraciones")
+            print(f"Raíz aproximada: x = {x:.8f}")
+            print(f"Verificación: f({x:.6f}) = {fx:.2e}")
+            print("=" * 55)
+            return x
+        x = g(x)
+    print(f"No convergió en {max_iter} iteraciones")
+    print("=" * 55)
+    return None
 
-x1 = g(x0)
 
-# Imprimir encabezados de la tabla
-print("=" * 70)
-print(f"{'Iter':<6} {'x0':<12} {'x1':<12} {'|x1-x0|':<12} {'|f(x1)|':<12}")
-print("=" * 70)
-
-if np.abs(gprima(x0)) >= 1:
-    print('La función g(x) no es contractiva en el punto x0')
-    exit()
-
-while np.abs(x1-x0) > eps1 and k < max_iter:
-    print(f"{k:<6} {x0:<12.8f} {x1:<12.8f} {
-          np.abs(x1-x0):<12.8f} {np.abs(f(x1)):<12.8f}")
-    k = k+1
-    x0 = x1
-    x1 = g(x0)
-
-print("=" * 70)
-
-if k >= max_iter:
-    print(f'No convergió después de {max_iter} iteraciones')
-else:
-    print('la solución es: ', x1)
-    print('verificación f(x1) =', f(x1))
+if __name__ == "__main__":
+    x0 = 4.090
+    punto_fijo(x0)
