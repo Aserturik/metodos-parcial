@@ -22,15 +22,14 @@ def calcular_a_b(Pc, Tc):
         b = 0.0867 * (R * Tc) / Pc
         return a, b
     except OverflowError:
-        print("⚠️ Error en cálculo de a y b por overflow")
+        print("Error en cálculo de a y b por overflow")
         return None, None
 
 # Función de Redlich-Kwong reordenada para encontrar la raíz
 def redlich_kwong_func(v, P, T, a, b):
     try:
-        # Ecuación: [P + a/(T^0.5 * V * (V + b))] * (V - b) = RT
         # Reordenada: [P + a/(T^0.5 * V * (V + b))] * (V - b) - RT = 0
-        if v <= b or v <= 0:  # Evitar divisiones por cero o valores no físicos
+        if v <= b or v <= 0: 
             return np.inf
         
         term1 = P * (v - b)
@@ -41,16 +40,13 @@ def redlich_kwong_func(v, P, T, a, b):
     except (OverflowError, ZeroDivisionError):
         return np.inf
 
-# Método de Regla Falsa con protección contra errores numéricos
 def regla_falsa(gas, Pc, Tc):
     a, b = calcular_a_b(Pc, Tc)
     if a is None or b is None:
-        print(f"❌ No se pudo calcular a y b para {gas}")
+        print(f"No se pudo calcular a y b para {gas}")
         return None
     
-    # Estimación inicial del volumen - debe ser mayor que b
     v_ideal = R * T / P
-    # Asegurar que los límites sean mayores que b
     vi = max(b * 1.1, 0.1 * v_ideal)  # Límite inferior
     vd = max(b * 1.1, 5.0 * v_ideal)  # Límite superior
     
@@ -59,7 +55,7 @@ def regla_falsa(gas, Pc, Tc):
     fm = 1
     k = 0
     
-    print(f"\n🔬 Gas: {gas} (Pc={Pc} atm, Tc={Tc} K)")
+    print(f"\nGas: {gas} (Pc={Pc} atm, Tc={Tc} K)")
     print(f"a = {a:.5f}, b = {b:.5f}")
     print(f"|{'k':^3}|{'V':^10}|{'f(V)':^10}|")
     print("-" * 30)
@@ -69,14 +65,14 @@ def regla_falsa(gas, Pc, Tc):
         
         denominator = fd - fi
         if denominator == 0:
-            print("⚠️ División por cero en la regla falsa. Detener.")
+            print("División por cero en la regla falsa. Detener.")
             return None
         
         vm = (vi * fd - vd * fi) / denominator
         fm = redlich_kwong_func(vm, P, T, a, b)
         
         if np.isnan(fm) or np.isinf(fm):
-            print("⚠️ Valor no válido (NaN o inf) en f(V). Detener.")
+            print("Valor no válido (NaN o inf) en f(V). Detener.")
             return None
         
         print(f"|{k:^3}|{vm:^10.6f}|{abs(fm):^10.4e}|")
@@ -90,10 +86,10 @@ def regla_falsa(gas, Pc, Tc):
             fi = fm
     
     if k >= max_iter:
-        print(f"⚠️ No convergió para {gas} en {max_iter} iteraciones")
+        print(f"No convergió para {gas} en {max_iter} iteraciones")
         return None
     
-    print(f"✅ Volumen molar para {gas}: V ≈ {vm:.6f} L/mol")
+    print(f"Volumen molar para {gas}: V ≈ {vm:.6f} L/mol")
     return vm
 
 # Ejecutar para todos los gases
@@ -103,7 +99,7 @@ for gas, (Pc, Tc) in gases.items():
     resultados[gas] = V
 
 # Resumen final
-print("\n📊 Resumen de resultados finales:")
+print("\nResumen de resultados finales:")
 print(f"{'Gas':<5} {'V (L/mol)':>12}")
 print("-" * 20)
 for gas, V in resultados.items():
